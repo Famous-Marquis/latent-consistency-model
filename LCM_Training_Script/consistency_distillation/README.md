@@ -76,6 +76,36 @@ PROGRAM="train_lcm_distill_sd_wds.py \
     --push_to_hub \
 ```
 
+
+## One-step full-model consistency distillation
+
+If you want to distill a pretrained LDM/SD teacher directly to **single-step** generation,
+use `train_lcm_distill_sd_1step.py`. This entrypoint enforces
+`--num_ddim_timesteps=1` and keeps full-weight distillation (no weight pruning/clipping).
+
+```bash
+PROGRAM="train_lcm_distill_sd_1step.py \
+    --pretrained_teacher_model=$MODEL_DIR \
+    --output_dir=$OUTPUT_DIR \
+    --mixed_precision=fp16 \
+    --resolution=512 \
+    --learning_rate=1e-6 --loss_type="huber" --ema_decay=0.95 --adam_weight_decay=0.0 \
+    --max_train_steps=1000 \
+    --max_train_samples=4000000 \
+    --dataloader_num_workers=8 \
+    --train_shards_path_or_url='pipe:aws s3 cp s3://muse-datasets/laion-aesthetic6plus-min512-data/{00000..01210}.tar -' \
+    --validation_steps=200 \
+    --checkpointing_steps=200 --checkpoints_total_limit=10 \
+    --train_batch_size=12 \
+    --gradient_checkpointing --enable_xformers_memory_efficient_attention \
+    --gradient_accumulation_steps=1 \
+    --use_8bit_adam \
+    --resume_from_checkpoint=latest \
+    --report_to=wandb \
+    --seed=453645634
+"
+```
+
 ## LCM-LoRA
 
 Instead of fine-tuning the full model, we can also just train a LoRA that can be injected into any SDXL model.
